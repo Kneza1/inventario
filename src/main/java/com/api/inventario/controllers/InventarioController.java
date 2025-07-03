@@ -5,6 +5,8 @@ import com.api.inventario.service.InventarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo; 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.util.List;
 
@@ -40,8 +42,25 @@ public class InventarioController {
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         inventarioService.eliminar(id);
         return ResponseEntity.noContent().build();
-    } 
+    }
 
+    @GetMapping("/hateoas/{id}")
+    public InventarioDTO obtenerHATEOAS(@PathVariable Integer id) { 
+        InventarioDTO dto = inventarioService.buscar(id);
+        // Agregar enlaces HATEOAS 
+        dto.add(linkTo(methodOn(InventarioController.class).obtenerHATEOAS(id)).withSelfRel()); 
+        dto.add(linkTo(methodOn(InventarioController.class).obtenerTodosHATEOAS()).withRel("todos")); 
+        dto.add(linkTo(methodOn(InventarioController.class).eliminar(id)).withRel("eliminar")); 
+        return dto;
+    }
+    @GetMapping("/hateoas") 
+    public List<InventarioDTO> obtenerTodosHATEOAS() { 
+        List<InventarioDTO> lista = inventarioService.listar(); 
+            for (InventarioDTO dto : lista) { 
+            dto.add(linkTo(methodOn(InventarioController.class).obtenerHATEOAS(dto.getIdProducto())).withSelfRel()); 
+    } 
+    return lista; 
+} 
 }
 
 
